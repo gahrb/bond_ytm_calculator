@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bond YTM Calculator</title>
+  <!-- 1. Load Tailwind CSS locally -->
+  <link href="css/tailwind.min.css" rel="stylesheet">
+  <!-- 2. Load custom brand CSS -->
+  <link href="css/popup.css" rel="stylesheet">
+</head>
+<body class="bg-brand-bg text-brand-text font-sans antialiased">
+
+  <!-- Header -->
+  <header class="flex items-center justify-between pb-3 mb-3.5 border-b border-slate-200">
+    <div class="flex items-center gap-2.5">
+      <div class="p-2 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-center">
+        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+        </svg>
+      </div>
+      <h1 class="text-base font-bold tracking-tight text-slate-900">Bond YTM <span class="font-normal text-slate-500">Calculator</span></h1>
+    </div>
+    <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">v1.5.0</span>
+  </header>
+
+  <!-- ISIN Lookup Section -->
+  <section class="mb-3.5 p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm">
+    <div class="flex items-center justify-between mb-1.5">
+      <label for="isinInput" class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        ISIN Auto-Lookup
+      </label>
+      <span class="text-[10px] text-slate-400 font-mono">ISO 6166</span>
+    </div>
+    
+    <div class="flex gap-2">
+      <input type="text" id="isinInput" placeholder="e.g. DE0001102580" maxlength="12" class="uppercase font-mono tracking-wider font-semibold text-xs border border-slate-300 rounded-lg">
+      <button id="isinLookupBtn" type="button" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-xs transition-colors cursor-pointer flex-shrink-0 shadow-sm">
+        Lookup
+      </button>
+    </div>
+    <div id="isinStatus" class="mt-2 text-[11px] font-medium hidden"></div>
+  </section>
+
+  <!-- Input Section -->
+  <section class="space-y-3 mb-4 p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm">
+    <h2 class="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">Input Parameters</h2>
+    
+    <div class="grid grid-cols-2 gap-3">
+      <!-- Face Value -->
+      <div class="col-span-1 group min-w-0">
+        <label for="faceValue" class="block text-xs text-slate-600 mb-1 truncate font-medium">Face Value (€)</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">€</span>
+          <input type="number" id="faceValue" value="100.00" step="0.01" min="0.01" class="pl-7 pr-2">
+        </div>
+      </div>
+      
+      <!-- Clean Price -->
+      <div class="col-span-1 group min-w-0">
+        <label for="cleanPrice" class="block text-xs text-slate-600 mb-1 truncate font-medium">Clean Price (%)</label>
+        <div class="relative">
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">%</span>
+          <input type="number" id="cleanPrice" value="73.39" step="0.01" min="0.01" class="pl-3 pr-7">
+        </div>
+      </div>
+
+      <!-- Coupon Rate -->
+      <div class="col-span-1 group min-w-0">
+        <label for="couponRate" class="block text-xs text-slate-600 mb-1 truncate font-medium">Coupon Rate (%)</label>
+        <div class="relative">
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">%</span>
+          <input type="number" id="couponRate" value="1.25" step="0.01" min="0" class="pl-3 pr-7">
+        </div>
+      </div>
+
+      <!-- Frequency -->
+      <div class="col-span-1 group min-w-0">
+        <label for="frequency" class="block text-xs text-slate-600 mb-1 truncate font-medium">Payment Frequency</label>
+        <select id="frequency">
+          <option value="1" selected>Annual (1/yr)</option>
+          <option value="2">Semi-Annual (2/yr)</option>
+        </select>
+      </div>
+
+      <!-- Settlement Date -->
+      <div class="col-span-1 group min-w-0">
+        <label for="settlementDate" class="block text-xs text-slate-600 mb-1 truncate font-medium">Settlement Date</label>
+        <input type="date" id="settlementDate">
+      </div>
+
+      <!-- Maturity Date -->
+      <div class="col-span-1 group min-w-0">
+        <label for="maturityDate" class="block text-xs text-slate-600 mb-1 truncate font-medium">Maturity Date</label>
+        <input type="date" id="maturityDate">
+      </div>
+
+      <!-- Calculate Button -->
+      <button id="calcBtn" class="col-span-2 flex items-center justify-center gap-2 w-full mt-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors shadow-sm cursor-pointer text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        Calculate Yield to Maturity
+      </button>
+    </div>
+  </section>
+
+  <!-- Results Section -->
+  <section id="resultsArea" class="space-y-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200 shadow-sm opacity-60 transition-opacity duration-300">
+    <h2 class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Calculated Metrics</h2>
+    
+    <div class="grid grid-cols-3 gap-2.5">
+      <!-- YTM Display -->
+      <div class="col-span-3 text-center p-3.5 bg-white rounded-xl border border-blue-100 shadow-sm">
+        <div id="ytmValue" class="text-3xl font-bold text-blue-600 tracking-tight font-mono tabular-nums">--.--<span class="text-xl">%</span></div>
+        <div class="text-xs text-slate-500 mt-0.5 font-medium">Yield to Maturity (Compounded)</div>
+      </div>
+
+      <!-- Secondary Metrics -->
+      <div class="col-span-1 bg-white p-2.5 rounded-lg border border-slate-200 text-center min-w-0 shadow-sm">
+        <div id="accruedInterest" class="text-sm font-bold text-slate-900 font-mono tabular-nums metric-value">--.--</div>
+        <div class="text-[9px] text-slate-500 mt-0.5 uppercase tracking-wider truncate font-semibold">Accrued (€)</div>
+      </div>
+      <div class="col-span-1 bg-white p-2.5 rounded-lg border border-slate-200 text-center min-w-0 shadow-sm">
+        <div id="dirtyPrice" class="text-sm font-bold text-slate-900 font-mono tabular-nums metric-value">--.--</div>
+        <div class="text-[9px] text-slate-500 mt-0.5 uppercase tracking-wider truncate font-semibold">Dirty Price (€)</div>
+      </div>
+      <div class="col-span-1 bg-white p-2.5 rounded-lg border border-slate-200 text-center min-w-0 shadow-sm">
+        <div id="yearsToMaturity" class="text-sm font-bold text-slate-900 font-mono tabular-nums metric-value">--.--</div>
+        <div class="text-[9px] text-slate-500 mt-0.5 uppercase tracking-wider truncate font-semibold">Years Left</div>
+      </div>
+    </div>
+    <div id="errorMessage" class="text-red-600 text-xs text-center hidden font-medium p-2 bg-red-50 rounded-lg border border-red-200"></div>
+  </section>
+
+  <!-- Legal Disclaimer & Liability Notice -->
+  <section class="mt-3.5 p-3 rounded-xl bg-slate-100/90 border border-slate-200 text-slate-600 text-[11px] leading-relaxed">
+    <details class="group cursor-pointer">
+      <summary class="flex items-center justify-between font-semibold text-slate-700 select-none list-none">
+        <span class="flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+          Legal Disclaimer
+        </span>
+        <span class="text-[10px] text-blue-600 font-medium group-open:hidden">Read details &#9662;</span>
+        <span class="text-[10px] text-blue-600 font-medium hidden group-open:inline">Hide &#9652;</span>
+      </summary>
+      <div class="mt-2 pt-2 border-t border-slate-200 text-[10px] text-slate-500 space-y-1.5 cursor-text">
+        <p>
+          <strong>No Financial Advice:</strong> All calculations, yields (YTM), prices, and automated ISIN lookups provided by this tool are strictly for informational and educational purposes. This application does not constitute investment, financial, tax, or legal advice.
+        </p>
+        <p>
+          <strong>User Responsibility for Ground Truth:</strong> Automated lookups and mathematical approximations may contain errors, discrepancies, delays, or omissions due to market conditions or feed limitations. <strong>The user is solely responsible for independently verifying all data and checking ground truth against official issuer documentation, prospectuses, and regulated exchange records before executing any trades or investments.</strong>
+        </p>
+        <p>
+          <strong>Limitation of Liability:</strong> To the fullest extent permitted by law, the developer(s) of this application cannot and shall not be held liable for any direct, indirect, consequential, or capital losses or damages arising from investment decisions taken based on information displayed within this application. All investing carries risk of financial loss.
+        </p>
+        <p>
+          <strong>AI / LLM-Assisted Development:</strong> This extension, its source code, logic, and interface were developed with the assistance of artificial intelligence and Large Language Models (LLMs). While automated test suites are in place, AI-assisted code may contain unforeseen bugs or calculation edge cases. Always double-check figures independently.
+        </p>
+      </div>
+    </details>
+  </section>
+
+  <!-- Buy Me a Coffee Support Card with QR Code -->
+  <section class="mt-3.5 bmc-card">
+    <div class="space-y-1 min-w-0">
+      <div class="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-amber-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/>
+        </svg>
+        <span>Buy me a coffee</span>
+      </div>
+      <p class="text-[10px] text-slate-500 leading-snug">
+        Scan the QR code or click below to support development:
+      </p>
+      <div class="pt-0.5">
+        <a href="https://buymeacoffee.com/gahrb" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-500 hover:bg-amber-600 text-slate-950 text-[10px] font-bold transition-colors cursor-pointer no-underline shadow-xs">
+          <span>buymeacoffee.com/gahrb &#8599;</span>
+        </a>
+      </div>
+    </div>
+    <a href="https://buymeacoffee.com/gahrb" target="_blank" rel="noopener noreferrer" class="bmc-qr-frame group block" title="Scan or click to open buymeacoffee.com/gahrb">
+      <img src="icons/bmc_qr.png" alt="Buy Me a Coffee QR Code" class="bmc-qr-img" width="72" height="72">
+    </a>
+  </section>
+
+  <!-- Footer Message -->
+  <div class="text-center text-[10px] text-slate-400 mt-2.5 pt-2 border-t border-slate-200">
+    Bond Calculator Tool · Actual/Actual ICMA Standard · Created with LLM assistance
+  </div>
+
+  <!-- Load logic file -->
+  <script src="js/popup.js"></script>
+
+</body>
+</html>
