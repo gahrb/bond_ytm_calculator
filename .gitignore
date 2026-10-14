@@ -8,6 +8,9 @@
 *.crt
 id_rsa*
 *.pfx
+*secret*
+*.zip
+screenshots/
 
 # Python artifacts
 __pycache__/
